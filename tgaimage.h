@@ -24,18 +24,21 @@ struct TGA_Header {
 
 struct TGAColor {
     union {
-        struct {
-            unsigned char b, g, r, a;
-        };
-        unsigned char raw[4];
-        unsigned int val;
+        uint8_t raw[4];
+        uint32_t val;
     };
+
     int bytespp;
+
+    inline uint8_t& b() { return raw[0]; }
+    inline uint8_t& g() { return raw[1]; }
+    inline uint8_t& r() { return raw[2]; }
+    inline uint8_t& a() { return raw[3]; }
 
     TGAColor() : val(0), bytespp(1) {
     }
 
-    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : b(B), g(G), r(R), a(A), bytespp(4) {
+    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : raw{B, G, R, A}, bytespp(4) {
     }
 
     TGAColor(int v, int bpp) : val(v), bytespp(bpp) {

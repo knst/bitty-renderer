@@ -5,26 +5,29 @@
 #include <math.h>
 #include "tgaimage.h"
 
-TGAImage::TGAImage() : data(NULL), width(0), height(0), bytespp(0) {
-}
-
-TGAImage::TGAImage(int w, int h, int bpp) : data(NULL), width(w), height(h), bytespp(bpp) {
-    unsigned long nbytes = width*height*bytespp;
-    data = new unsigned char[nbytes];
+TGAImage::TGAImage(int w, int h, int bpp)
+: width(w)
+, height(h)
+, bytespp(bpp)
+, data(new uint8_t [width * height * bytespp])
+{
+    size_t nbytes = width * height * bytespp;
     memset(data, 0, nbytes);
 }
 
-TGAImage::TGAImage(const TGAImage &img) {
-    width = img.width;
-    height = img.height;
-    bytespp = img.bytespp;
-    unsigned long nbytes = width*height*bytespp;
-    data = new unsigned char[nbytes];
+TGAImage::TGAImage(const TGAImage &img)
+: width(img.width)
+, height(img.height)
+, bytespp(img.bytespp)
+, data(new uint8_t[width * height * bytespp])
+{
+    size_t nbytes = width * height * bytespp;
     memcpy(data, img.data, nbytes);
 }
 
 TGAImage::~TGAImage() {
-    if (data) delete [] data;
+    delete [] data;
+    data = nullptr;
 }
 
 TGAImage & TGAImage::operator =(const TGAImage &img) {
@@ -249,18 +252,34 @@ bool TGAImage::unload_rle_data(std::ofstream &out) {
 }
 
 TGAColor TGAImage::get(int x, int y) {
-    if (!data || x<0 || y<0 || x>=width || y>=height) {
-        return TGAColor();
-    }
+    if (x<0 || y<0 || x>=width || y>=height)
+        throw std::logic_error("error index in TGAImage::get()");
     return TGAColor(data+(x+y*width)*bytespp, bytespp);
 }
 
-bool TGAImage::set(int x, int y, TGAColor c) {
-    if (!data || x<0 || y<0 || x>=width || y>=height) {
+bool TGAImage::safeSet(int x, int y, const TGAColor& c) {
+    if (x<0 || y<0 || x>=width || y>=height) {
         return false;
     }
-    memcpy(data+(x+y*width)*bytespp, c.raw, bytespp);
+    for (int index = 0; index < bytespp; ++index) {
+        *(data + (x + y * width) * bytespp + index) = c.raw[index];
+    }
     return true;
+}
+
+void TGAImage::set1(int x, int y, const TGAColor& c) {
+    uint8_t *color = (data + (x + y * width) * 1);
+    *color = c.val;
+}
+
+void TGAImage::set2(int x, int y, const TGAColor& c) {
+    uint16_t *color = reinterpret_cast<uint16_t*>(data + (x + y * width) * 2);
+    *color = c.val;
+}
+
+void TGAImage::set4(int x, int y, const TGAColor& c) {
+    uint32_t *color = reinterpret_cast<uint32_t*>(data + (x + y * width) * 4);
+    *color = c.val;
 }
 
 int TGAImage::get_bytespp() {
@@ -282,8 +301,8 @@ bool TGAImage::flip_horizontally() {
         for (int j=0; j<height; j++) {
             TGAColor c1 = get(i, j);
             TGAColor c2 = get(width-1-i, j);
-            set(i, j, c2);
-            set(width-1-i, j, c1);
+            safeSet(i, j, c2);
+            safeSet(width-1-i, j, c1);
         }
     }
     return true;

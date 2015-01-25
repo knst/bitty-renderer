@@ -2,6 +2,7 @@
 #define __IMAGE_H__
 
 #include <fstream>
+#include <stdexcept>
 
 #pragma pack(push,1)
 struct TGA_Header {
@@ -24,21 +25,19 @@ struct TGA_Header {
 
 struct TGAColor {
     union {
+        struct {
+            uint8_t b, g, r, a;
+        } parts;
         uint8_t raw[4];
         uint32_t val;
     };
 
     int bytespp;
 
-    inline uint8_t& b() { return raw[0]; }
-    inline uint8_t& g() { return raw[1]; }
-    inline uint8_t& r() { return raw[2]; }
-    inline uint8_t& a() { return raw[3]; }
-
     TGAColor() : val(0), bytespp(1) {
     }
 
-    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : raw{B, G, R, A}, bytespp(4) {
+    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : parts{B, G, R, A}, bytespp(4) {
     }
 
     TGAColor(int v, int bpp) : val(v), bytespp(bpp) {
@@ -51,6 +50,8 @@ struct TGAColor {
         for (int i=0; i<bpp; i++) {
             raw[i] = p[i];
         }
+        if (bpp < 1 || bpp > 4)
+            throw std::logic_error("bpp can be only 1, 2, 3 or 4");
     }
 
     TGAColor & operator =(const TGAColor &c) {
@@ -65,10 +66,10 @@ struct TGAColor {
 
 class TGAImage {
 protected:
-    unsigned char* data;
     int width;
     int height;
     int bytespp;
+    uint8_t* data;
 
     bool   load_rle_data(std::ifstream &in);
     bool unload_rle_data(std::ofstream &out);
@@ -77,7 +78,6 @@ public:
         GRAYSCALE=1, RGB=3, RGBA=4
     };
 
-    TGAImage();
     TGAImage(int w, int h, int bpp);
     TGAImage(const TGAImage &img);
     bool read_tga_file(const char *filename);
@@ -86,13 +86,16 @@ public:
     bool flip_vertically();
     bool scale(int w, int h);
     TGAColor get(int x, int y);
-    bool set(int x, int y, TGAColor c);
+    bool safeSet(int x, int y, const TGAColor& c);
+    void set1(int x, int y, const TGAColor& c);
+    void set2(int x, int y, const TGAColor& c);
+    void set4(int x, int y, const TGAColor& c);
     ~TGAImage();
     TGAImage & operator =(const TGAImage &img);
     int get_width();
     int get_height();
     int get_bytespp();
-    unsigned char *buffer();
+    uint8_t *buffer();
     void clear();
 };
 

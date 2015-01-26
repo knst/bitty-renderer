@@ -82,10 +82,10 @@ public:
     TGAImage(const TGAImage &img);
     bool read_tga_file(const char *filename);
     bool write_tga_file(const char *filename, bool rle=true);
-    bool flip_horizontally();
-    bool flip_vertically();
+    void flip_horizontally();
+    void flip_vertically();
     bool scale(int w, int h);
-    TGAColor get(int x, int y);
+    TGAColor safeGet(int x, int y);
     bool safeSet(int x, int y, const TGAColor& c);
     void set1(int x, int y, const TGAColor& c);
     void set2(int x, int y, const TGAColor& c);

@@ -32,19 +32,19 @@ Model::Model(const std::string& filename) {
     std::cerr << "# v# " << verts.size() << " f# "  << faces.size() << std::endl;
 }
 
-size_t Model::nverts() {
+size_t Model::nverts() const {
     return verts.size();
 }
 
-size_t Model::nfaces() {
+size_t Model::nfaces() const {
     return faces.size();
 }
 
-std::vector<int> Model::face(size_t idx) {
+std::vector<int> Model::face(size_t idx) const {
     return faces[idx];
 }
 
-Vec3f Model::vert(size_t i) {
+Vec3f Model::vert(size_t i) const {
     return verts[i];
 }
 

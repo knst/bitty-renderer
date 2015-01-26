@@ -1,3 +1,5 @@
+#include "geometry.h"
+#include "model.h"
 #include "renderer.h"
 
 #include <cmath>
@@ -34,6 +36,25 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
             y +=  (y1 > y0 ? 1 : -1);
             error -= 1.0;
         }
+    }
+}
+
+static inline int transform(float a, float base) {
+    return (a + 1.0) * base / 2.0;
+}
+
+void drawFace(const Model& model, const vector<int>& face, TGAImage& image) {
+    int width = image.get_width();
+    int height = image.get_height();
+
+    for (size_t j = 0; j < 3; ++j) {
+        Vec3f v0 = model.vert(face[j]);
+        Vec3f v1 = model.vert(face[(j+1) % 3]);
+        int x0 = transform(v0.x, width);
+        int y0 = transform(v0.y, height);
+        int x1 = transform(v1.x, width);
+        int y1 = transform(v1.y, height);
+        line(x0, y0, x1, y1, image, white);
     }
 }
 

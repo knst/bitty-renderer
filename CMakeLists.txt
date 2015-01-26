@@ -1,7 +1,9 @@
 project(bitty_renderer)
 
 set(SOURCE
+    renderer.cpp
     tgaimage.cpp
+    model.cpp
     main.cpp
 )
 

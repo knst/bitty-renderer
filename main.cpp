@@ -9,12 +9,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    TGAImage image(800, 800, TGAImage::RGBA);
+    for (size_t test = 0; test < 1; ++test) {
+        TGAImage image(800, 800, TGAImage::RGBA);
 
-    Model model(argv[1]);
-    drawModel(model, {0, 0, -1}, image);
+        Model model(argv[1]);
+        drawModel(model, {0, 0, -1}, image);
 
-    image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    image.write_tga_file("output.tga");
+        image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
+        image.write_tga_file("output.tga");
+    }
     return 0;
 }

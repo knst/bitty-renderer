@@ -37,7 +37,7 @@ template <class t> struct Vec3 {
     inline t       operator* (const Vec3<t>& v) const { return x * v.x + y * v.y + z * v.z; }
 
     float norm() const {
-        return std::sqrt(x * x + y * y + z * z);
+        return std::sqrt((*this) * (*this));
     }
 
     Vec3<t>& normalize(t l = 1) {

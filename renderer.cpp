@@ -31,11 +31,23 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
     float derror = std::abs(static_cast<float>(dy) / dx);
     float error = 0;
     int y = y0;
-    for (int x = x0; x <= x1; ++x) {
-        if (steep)
-            image.set4(y, x, color);
-        else
-            image.set4(x, y, color);
+
+    if (x0 < 0) {
+        error = derror * x0;
+        y += (y1 > y0 ? 1 : -1) * truncf(error);
+        error = error - truncf(error);
+        x0 = 0;
+    }
+    x1 = min(x1, -1 + (steep ? image.get_height() : image.get_width()));
+
+    int yMax = steep ? image.get_width() : image.get_height();
+    for (int x = x0; x <= x1 && y < yMax; ++x) {
+        if (y >= 0) {
+            if (steep)
+                image.set4(y, x, color);
+            else
+                image.set4(x, y, color);
+        }
         error += derror;
         if (error > 0.5) {
             y +=  (y1 > y0 ? 1 : -1);
@@ -48,7 +60,11 @@ void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
     line(t0.x, t0.y, t1.x, t1.y, image, color);
 }
 
-void fillTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
+void fillTriangle(
+    Vec2i t0, Vec2i t1, Vec2i t2,
+    TGAImage& image, TGAColor color,
+    vector<vector<int>>& zbuffer
+) {
     if (t0.y > t1.y)
         swap(t0, t1);
     if (t0.y > t2.y)
@@ -66,12 +82,14 @@ void fillTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color)
     int dy0 = y1 - y0 + 1;
     int dy1 = y2 - y1 + 1;
 
-    for (int y = y0; y <= y1; ++y) {
+    for (int y = y0; y <= y2; ++y) {
         float dl = static_cast<float>(y - y0) / dy2;
-        float dr = static_cast<float>(y - y0) / dy0;
+        float dr = y <= y1
+            ? static_cast<float>(y - y0) / dy0
+            : static_cast<float>(y - y1) / dy1;
 
         int xl = x0 + (x2 - x0) * dl;
-        int xr = x0 + (x1 - x0) * dr;
+        int xr = y <= y1 ? x0 + dr * (x1 - x0) : x1 + dr * (x2 - x1);
 
         if (reverse) {
             for (int x = xl; x <= xr; ++x) {
@@ -118,6 +136,8 @@ void drawModel(const Model& model, const Vec3f& lightDir, TGAImage& image) {
     int width = image.get_width();
     int height = image.get_height();
 
+    vector<vector<int>> zbuffer(width, vector<int>(height));
+
     for (size_t i = 0; i < model.nfaces(); ++i) {
         const auto& face = model.face(i);
         Vec2i screenCoord[3];
@@ -130,6 +150,9 @@ void drawModel(const Model& model, const Vec3f& lightDir, TGAImage& image) {
         n.normalize();
         float intensity = n * lightDir;
         if (intensity > 0)
-            fillTriangle(screenCoord[0], screenCoord[1], screenCoord[2], image, TGAColor(intensity * 255, intensity * 255, intensity * 255));
+            fillTriangle(
+                screenCoord[0], screenCoord[1], screenCoord[2],
+                image, TGAColor(intensity * 255, intensity * 255, intensity * 255),
+                zbuffer);
     }
 }

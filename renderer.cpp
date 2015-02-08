@@ -2,6 +2,7 @@
 #include "model.h"
 #include "renderer.h"
 
+#include <limits>
 #include <cmath>
 
 using namespace std;
@@ -88,13 +89,20 @@ void fillTriangle(
             ? static_cast<float>(y - y0) / dy0
             : static_cast<float>(y - y1) / dy1;
 
-        int xl = x0 + (x2 - x0) * dl;
-        int xr = y <= y1 ? x0 + dr * (x1 - x0) : x1 + dr * (x2 - x1);
+        Vec3i A = t0 + Vec3f(t2 - t0) * dl;
+        Vec3i B = y <= y1
+            ? t0 + Vec3f(t1 - t0) * dr
+            : t1 + Vec3f(t2 - t1) * dr;
         if (reverse)
-            swap(xl, xr);
+            swap(A, B);
 
-        for (int x = xl; x <= xr; ++x) {
-            image.set4(x, y, color);
+        for (int x = A.x; x <= B.x; ++x) {
+            float phi = B.x == A.x ? 1.0 : static_cast<float>(x - A.x) / (B.x - A.x);
+            float z = A.z + (B.z - A.z) * phi;
+            if (zbuffer[x][y] < z) {
+                image.set4(x, y, color);
+                zbuffer[x][y] = z;
+            }
         }
     }
 
@@ -114,7 +122,7 @@ void drawModel(const Model& model, const Vec3f& lightDir, TGAImage& image) {
     int width = image.get_width();
     int height = image.get_height();
 
-    vector<vector<int>> zbuffer(width, vector<int>(height));
+    vector<vector<int>> zbuffer(width, vector<int>(height, numeric_limits<int>::min()));
 
     for (size_t i = 0; i < model.nfaces(); ++i) {
         const auto& face = model.face(i);

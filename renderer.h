@@ -19,7 +19,7 @@ extern void line(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor color
 
 extern void triangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color);
 
-extern void fillTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color, std::vector<std::vector<int>>& zbuffer);
+extern void fillTriangle(Vec3i t0, Vec3i t1, Vec3i t2, TGAImage& image, TGAColor color, std::vector<std::vector<int>>& zbuffer);
 
 void drawModel(const Model& model, const Vec3f& lightDir, TGAImage& image);
 #endif

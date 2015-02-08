@@ -61,7 +61,7 @@ void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
 }
 
 void fillTriangle(
-    Vec2i t0, Vec2i t1, Vec2i t2,
+    Vec3i t0, Vec3i t1, Vec3i t2,
     TGAImage& image, TGAColor color,
     vector<vector<int>>& zbuffer
 ) {
@@ -76,7 +76,7 @@ void fillTriangle(
     int x1 = t1.x; int y1 = t1.y;
     int x2 = t2.x; int y2 = t2.y;
 
-    bool reverse = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0) > 0;
+    bool reverse = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0) < 0;
 
     int dy2 = y2 - y0 + 1;
     int dy0 = y1 - y0 + 1;
@@ -90,33 +90,11 @@ void fillTriangle(
 
         int xl = x0 + (x2 - x0) * dl;
         int xr = y <= y1 ? x0 + dr * (x1 - x0) : x1 + dr * (x2 - x1);
+        if (reverse)
+            swap(xl, xr);
 
-        if (reverse) {
-            for (int x = xl; x <= xr; ++x) {
-                image.set4(x, y, color);
-            }
-        } else {
-            for (int x = xr; x <= xl; ++x) {
-                image.set4(x, y, color);
-            }
-        }
-    }
-
-    for (int y = y1; y <= y2; ++y) {
-        float dl = static_cast<float>(y - y0) / dy2;
-        float dr = static_cast<float>(y - y1) / dy1;
-
-        int xl = x0 + (x2 - x0) * dl;
-        int xr = x1 + (x2 - x1) * dr;
-
-        if (reverse) {
-            for (int x = xl; x <= xr; ++x) {
-                image.set4(x, y, color);
-            }
-        } else {
-            for (int x = xr; x <= xl; ++x) {
-                image.set4(x, y, color);
-            }
+        for (int x = xl; x <= xr; ++x) {
+            image.set4(x, y, color);
         }
     }
 
@@ -140,11 +118,11 @@ void drawModel(const Model& model, const Vec3f& lightDir, TGAImage& image) {
 
     for (size_t i = 0; i < model.nfaces(); ++i) {
         const auto& face = model.face(i);
-        Vec2i screenCoord[3];
+        Vec3i screenCoord[3];
         Vec3f worldCoord[3];
         for (size_t j = 0; j < 3; ++j) {
             worldCoord[j] = model.vert(face[j]);
-            screenCoord[j] = Vec2i(transform(worldCoord[j].x, width), transform(worldCoord[j].y, height));
+            screenCoord[j] = Vec3i(transform(worldCoord[j].x, width), transform(worldCoord[j].y, height), worldCoord[j].z);
         }
         Vec3f n = (worldCoord[2] - worldCoord[0]) ^ (worldCoord[1] - worldCoord[0]);
         n.normalize();
